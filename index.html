@@ -1,12 +1,239 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JAI — Onboarding Estratégico</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JAI — Onboarding Estratégico</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0A0A0A; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #F0EBE1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+    .page { width: 100%; max-width: 440px; text-align: center; }
+    .logo-j { font-size: 60px; font-weight: 700; color: #962320; letter-spacing: -2px; line-height: 1; }
+    .logo-ai { font-size: 26px; font-weight: 400; color: #666; letter-spacing: 4px; }
+    .tagline { font-size: 28px; font-weight: 700; line-height: 1.35; margin: 16px 0 14px; }
+    .sub { font-size: 15px; color: #666; line-height: 1.75; margin-bottom: 40px; }
+    .btn { background: #962320; color: #fff; border: none; padding: 14px 36px; font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; letter-spacing: 0.5px; font-family: inherit; transition: background 0.2s; }
+    .btn:hover { background: #b52a27; }
+    .credit { margin-top: 28px; font-size: 11px; color: #333; letter-spacing: 2px; text-transform: uppercase; }
+    .name-card { display: flex; flex-direction: column; align-items: center; gap: 20px; max-width: 400px; width: 100%; }
+    input { width: 100%; padding: 13px 16px; background: #111; border: 1px solid #1E1E1E; border-radius: 4px; color: #F0EBE1; font-size: 16px; font-family: inherit; outline: none; }
+    input:focus { border-color: #96232033; }
+    .chat-wrap { width: 100%; max-width: 660px; height: 100vh; max-height: 780px; display: flex; flex-direction: column; background: #111; border: 1px solid #1E1E1E; border-radius: 8px; overflow: hidden; }
+    .chat-header { padding: 13px 20px; border-bottom: 1px solid #1E1E1E; display: flex; align-items: center; justify-content: space-between; background: #0C0C0C; }
+    .chat-steps { padding: 8px 20px; border-bottom: 1px solid #1E1E1E; background: #0E0E0E; font-size: 11px; color: #444; letter-spacing: 0.5px; }
+    .messages { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 18px; }
+    .msg { display: flex; gap: 10px; align-items: flex-start; animation: fadeUp 0.25s ease; }
+    .msg.user { justify-content: flex-end; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: #962320; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+    .bubble { padding: 13px 16px; max-width: 84%; font-size: 14.5px; line-height: 1.8; border-radius: 4px 12px 12px 12px; background: #151515; border: 1px solid #1E1E1E; white-space: pre-wrap; }
+    .bubble.user { border-radius: 12px 4px 12px 12px; background: #18130A; border-color: #2a1f00; }
+    .input-bar { padding: 12px 16px; border-top: 1px solid #1E1E1E; display: flex; gap: 10px; align-items: flex-end; background: #0C0C0C; }
+    textarea { flex: 1; background: #151515; border: 1px solid #1E1E1E; border-radius: 6px; color: #F0EBE1; font-size: 14px; padding: 10px 14px; font-family: inherit; resize: none; line-height: 1.6; max-height: 140px; overflow-y: auto; outline: none; }
+    textarea:focus { border-color: #96232033; }
+    .send-btn { width: 38px; height: 38px; border-radius: 50%; background: #962320; color: #fff; border: none; font-size: 17px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
+    .send-btn:disabled { opacity: 0.35; cursor: default; }
+    .hint { text-align: center; font-size: 10px; color: #2a2a2a; margin: 3px 0 7px; }
+    .typing { color: #962320; font-size: 18px; letter-spacing: 3px; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .highlight { color: #962320; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+const SYSTEM_PROMPT = `Você é o JAI — a ferramenta de onboarding estratégico da mentoria de Janaina Bonifácio.
+
+Você tem UM único objetivo: conduzir o mentorado por um processo de perguntas profundas até que ele tenha clareza total sobre 5 pilares do negócio dele. Nada mais.
+
+Você não cria conteúdo. Não dá dicas. Não explica marketing. Você faz perguntas — e não avança enquanto a resposta não for boa o suficiente.
+
+TOM: direto, elegante, humano. NUNCA diga: "Claro!", "Ótima pergunta!", "Certamente!". NUNCA use linguagem de chatbot. SEMPRE trate o mentorado pelo nome com naturalidade.
+
+REGRA DE OURO: UMA pergunta por vez. Se a resposta for genérica, diga: "Isso ainda está genérico. Vamos mais fundo." Só avance quando o pilar estiver realmente resolvido.
+
+PILAR 1 — SOLUÇÃO: Qual é a dor específica que você resolve? Não o título profissional — o problema real que a pessoa tem ANTES de te encontrar. Só avance com: DOR ESPECÍFICA + PÚBLICO COM ESPECIFICIDADE.
+
+PILAR 2 — DIFERENCIAL REAL: O que você faz que uma concorrente na mesma cidade NÃO faria da mesma forma? NUNCA aceite: "atendimento personalizado", "me dedico muito", "uso produtos de qualidade". Aplique o Teste da Paridade: 10 concorrentes poderiam dizer a mesma coisa? Se sim, não é diferencial.
+
+PILAR 3 — PÚBLICO: Não é demografia. É o estado mental e emocional da pessoa ideal. O que ela sente, evita, teme, deseja. Se for demográfico, pergunte: "O que passa na cabeça dela de madrugada quando pensa no problema que você resolve?"
+
+PILAR 4 — PERSONALIDADE: O que você quer mudar no mercado? O que te incomoda profundamente? Como você se comunica naturalmente — 3 palavras que uma cliente usaria para te descrever?
+
+PILAR 5 — POSICIONAMENTO: A tese. O conselho que você daria para sua cliente ideal num café. Em uma frase. Precisa conectar com o diferencial e poder ser repetida toda semana no conteúdo.
+
+ENTREGA FINAL — após os 5 pilares, monte:
+
+🗺️ MAPA ESTRATÉGICO — [NOME]
+
+✦ SOLUÇÃO
+[Dor específica + para quem]
+
+✦ DIFERENCIAL REAL
+[O que é genuinamente único]
+
+✦ PÚBLICO
+[Descrição emocional e comportamental]
+
+✦ PERSONALIDADE
+[Visão + valores + tom de voz]
+
+✦ POSICIONAMENTO
+[A tese — o conselho do café]
+
+Finalize com: "Esse é o seu mapa. Tudo que você criar a partir de agora nasce daqui. 📋 Salva no seu Trello — card DNA do Negócio."
+
+Encerre aqui. Não ofereça próximos passos.`;
+
+let phase = 'landing';
+let userName = '';
+let conversation = [];
+let isLoading = false;
+
+function render() {
+  const app = document.getElementById('app');
+  if (phase === 'landing') {
+    app.innerHTML = `
+      <div class="page">
+        <div style="margin-bottom:32px">
+          <span class="logo-j">J</span><span class="logo-ai">AI</span>
+        </div>
+        <p class="tagline">Clareza antes do conteúdo.</p>
+        <p class="sub">Um processo de perguntas para você sair daqui sabendo exatamente quem você é, o que você resolve, e por que alguém pagaria mais por isso.</p>
+        <button class="btn" onclick="goToName()">Começar →</button>
+        <p class="credit">by Janaina Bonifácio</p>
+      </div>`;
+  } else if (phase === 'name') {
+    app.innerHTML = `
+      <div class="name-card">
+        <div><span class="logo-j" style="font-size:40px">J</span><span class="logo-ai" style="font-size:18px">AI</span></div>
+        <p style="font-size:20px;font-weight:700">Qual é o seu nome?</p>
+        <input id="nameInput" type="text" placeholder="Digite seu nome..." onkeydown="if(event.key==='Enter') startChat()" autofocus />
+        <button class="btn" onclick="startChat()">Entrar →</button>
+      </div>`;
+    setTimeout(() => document.getElementById('nameInput')?.focus(), 100);
+  } else {
+    app.innerHTML = `
+      <div class="chat-wrap">
+        <div class="chat-header">
+          <div><span class="logo-j" style="font-size:22px">J</span><span class="logo-ai" style="font-size:11px">AI</span></div>
+          <span style="font-size:12px;color:#666;letter-spacing:1px">${userName}</span>
+        </div>
+        <div class="chat-steps">SOLUÇÃO · DIFERENCIAL · PÚBLICO · PERSONALIDADE · POSICIONAMENTO</div>
+        <div class="messages" id="messages"></div>
+        <div class="input-bar">
+          <textarea id="msgInput" placeholder="Escreva sua resposta..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)" ${isLoading ? 'disabled' : ''}></textarea>
+          <button class="send-btn" onclick="sendMessage()" ${isLoading ? 'disabled' : ''}>↑</button>
+        </div>
+        <p class="hint">Enter para enviar · Shift+Enter para nova linha</p>
+      </div>`;
+    renderMessages();
+    setTimeout(() => document.getElementById('msgInput')?.focus(), 100);
+  }
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages');
+  if (!container) return;
+  let html = '';
+  conversation.filter(m => m.role !== 'system').forEach(m => {
+    if (m.role === 'user') {
+      html += `<div class="msg user"><div class="bubble user">${escapeHtml(m.content)}</div></div>`;
+    } else {
+      html += `<div class="msg"><div class="avatar">J</div><div class="bubble">${formatMsg(m.content)}</div></div>`;
+    }
+  });
+  if (isLoading) {
+    html += `<div class="msg"><div class="avatar">J</div><div class="bubble"><span class="typing">...</span></div></div>`;
+  }
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatMsg(text) {
+  return escapeHtml(text)
+    .replace(/✦ ([^\n]+)/g, '<span class="highlight">✦ $1</span>')
+    .replace(/🗺️([^\n]+)/g, '<span class="highlight">🗺️$1</span>')
+    .replace(/\n/g, '<br>');
+}
+
+function goToName() { phase = 'name'; render(); }
+
+async function startChat() {
+  const input = document.getElementById('nameInput');
+  const name = input ? input.value.trim() : '';
+  if (!name) return;
+  userName = name;
+  phase = 'chat';
+  conversation = [];
+  render();
+
+  const intro = `${name}, vamos começar.\n\nEssa conversa tem um único propósito: sair daqui com clareza real sobre o seu negócio.\n\nVou te fazer perguntas. Se a sua resposta for genérica, eu vou te dizer. Isso não é crítica — é o processo.\n\nUma pergunta por vez. Sem pressa.`;
+  conversation.push({ role: 'assistant', content: intro });
+  renderMessages();
+
+  const primer = `O nome do mentorado é ${name}. Inicie o onboarding pelo PILAR 1 — SOLUÇÃO. Explique brevemente o que quer mapear, dê exemplo de resposta boa vs genérica, e faça a pergunta de abertura. Apenas uma pergunta. Tom direto e elegante.`;
+  await callClaude(primer);
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input ? input.value.trim() : '';
+  if (!text || isLoading) return;
+  input.value = '';
+  input.style.height = 'auto';
+  conversation.push({ role: 'user', content: text });
+  await callClaude(null);
+}
+
+async function callClaude(primerText) {
+  isLoading = true;
+  renderMessages();
+
+  const msgs = primerText
+    ? [{ role: 'user', content: primerText }]
+    : conversation.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content }));
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: msgs, system: SYSTEM_PROMPT }),
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Algo deu errado. Tenta de novo.';
+    if (primerText) {
+      conversation.push({ role: 'user', content: primerText });
+      conversation.push({ role: 'assistant', content: reply });
+    } else {
+      conversation.push({ role: 'assistant', content: reply });
+    }
+  } catch (e) {
+    conversation.push({ role: 'assistant', content: 'Algo deu errado. Tenta de novo.' });
+  }
+
+  isLoading = false;
+  renderMessages();
+  setTimeout(() => document.getElementById('msgInput')?.focus(), 100);
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+render();
+</script>
+</body>
 </html>
